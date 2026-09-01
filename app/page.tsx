@@ -2,6 +2,31 @@
 
 import React, { useState, useRef } from 'react';
 import AuditResults from '@/components/AuditResults';
+import styles from './page.module.css';
+
+type UploadKind = 'lease' | 'invoice';
+
+function FileCard({ kind, file, inputRef, onFile }: { kind: UploadKind; file: File | null; inputRef: React.RefObject<HTMLInputElement | null>; onFile: (file: File) => void }) {
+  const title = kind === 'lease' ? 'Lease Agreement' : 'Landlord Invoice';
+  const description = kind === 'lease' ? 'The source of contractual obligations' : 'The charges to compare against the lease';
+  const icon = kind === 'lease' ? '▤' : '▥';
+
+  return (
+    <div className={`${styles.uploadCard} ${file ? styles.uploadCardReady : ''}`} onClick={() => inputRef.current?.click()}>
+      <input ref={inputRef} type="file" accept="application/pdf,.pdf" onChange={event => event.target.files?.[0] && onFile(event.target.files[0])} />
+      <div className={styles.uploadIcon}>{icon}</div>
+      <div className={styles.uploadCopy}>
+        <div className={styles.uploadTitleRow}>
+          <h2>{title}</h2>
+          <span className={file ? styles.readyBadge : styles.requiredBadge}>{file ? 'Ready' : 'Required'}</span>
+        </div>
+        {file ? <p className={styles.fileName}>{file.name}</p> : <p>{description}</p>}
+        <small>{file ? `${file.type || 'PDF document'} · ${(file.size / 1024 / 1024).toFixed(2)} MB` : 'Drop a PDF here or browse files'}</small>
+      </div>
+      <span className={styles.browseLabel}>{file ? 'Change' : 'Browse'}</span>
+    </div>
+  );
+}
 
 export default function Home() {
   const [leaseFile, setLeaseFile] = useState<File | null>(null);
@@ -13,27 +38,13 @@ export default function Home() {
   const leaseInputRef = useRef<HTMLInputElement>(null);
   const invoiceInputRef = useRef<HTMLInputElement>(null);
 
-  const handleLeaseDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      setLeaseFile(e.dataTransfer.files[0]);
-    }
-  };
-
-  const handleInvoiceDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      setInvoiceFile(e.dataTransfer.files[0]);
-    }
-  };
-
   const handleAudit = async () => {
     if (!leaseFile || !invoiceFile) {
       setError('Please upload both documents to start the audit.');
       return;
     }
 
-    if (leaseFile.type !== 'application/pdf' || invoiceFile.type !== 'application/pdf') {
+    if (!leaseFile.name.toLowerCase().endsWith('.pdf') || !invoiceFile.name.toLowerCase().endsWith('.pdf')) {
       setError('Please upload a lease PDF and an invoice PDF.');
       return;
     }
@@ -63,95 +74,63 @@ export default function Home() {
   };
 
   return (
-    <main style={{ maxWidth: '1200px', margin: '0 auto', width: '100%' }}>
-      <header style={{ marginBottom: '3rem', textAlign: 'center' }}>
-        <h1 className="title-gradient" style={{ fontSize: '3rem', marginBottom: '1rem' }}>
-          Lease Audit Engine
-        </h1>
-        <p style={{ color: 'var(--text-muted)', fontSize: '1.1rem', maxWidth: '600px', margin: '0 auto' }}>
-          Upload a lease agreement and a landlord invoice. Our RocketRide AI engine will analyze the documents, extract rules and charges, compare them, and instantly detect potential overcharges.
-        </p>
+    <main className={styles.shell}>
+      <header className={styles.header}>
+        <div className={styles.brandMark}>LA</div>
+        <div>
+          <p className={styles.eyebrow}>LEASE OPERATIONS / AI REVIEW</p>
+          <h1>LeaseAudit <span>AI</span></h1>
+        </div>
+        <div className={styles.headerStatus}><span /> Cloud audit ready</div>
       </header>
 
       {!results ? (
-        <div className="glass-panel" style={{ maxWidth: '800px', margin: '0 auto' }}>
-          <div className="grid grid-cols-2" style={{ marginBottom: '2rem' }}>
-            
-            {/* Lease Upload */}
-            <div 
-              className={`file-drop-area ${leaseFile ? 'active' : ''}`}
-              onDragOver={(e) => e.preventDefault()}
-              onDrop={handleLeaseDrop}
-              onClick={() => leaseInputRef.current?.click()}
-            >
-              <input 
-                type="file" 
-                accept=".pdf,.png,.jpg,.jpeg" 
-                ref={leaseInputRef} 
-                onChange={(e) => e.target.files && setLeaseFile(e.target.files[0])} 
-              />
-              <svg className="upload-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-              <div>
-                <h3 style={{ marginBottom: '0.5rem' }}>Lease Agreement</h3>
-                <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-                  {leaseFile ? leaseFile.name : 'Drag & drop or click to upload'}
-                </p>
-              </div>
-            </div>
+        <>
+        <section className={styles.hero}>
+          <div className={styles.heroCopy}>
+            <p className={styles.kicker}>A clearer view of what you owe</p>
+            <h2>Turn lease language into <em>actionable</em> answers.</h2>
+            <p className={styles.heroText}>Compare lease obligations against landlord charges and identify potential overcharges with evidence.</p>
+          </div>
+          <div className={styles.workflow} aria-label="Audit workflow">
+            {['Upload', 'Analyze', 'Review', 'Resolve'].map((step, index) => <div className={styles.workflowStep} key={step}><b>0{index + 1}</b><span>{step}</span>{index < 3 && <i>→</i>}</div>)}
+          </div>
+        </section>
 
-            {/* Invoice Upload */}
-            <div 
-              className={`file-drop-area ${invoiceFile ? 'active' : ''}`}
-              onDragOver={(e) => e.preventDefault()}
-              onDrop={handleInvoiceDrop}
-              onClick={() => invoiceInputRef.current?.click()}
-            >
-              <input 
-                type="file" 
-                accept=".pdf,.png,.jpg,.jpeg" 
-                ref={invoiceInputRef} 
-                onChange={(e) => e.target.files && setInvoiceFile(e.target.files[0])} 
-              />
-              <svg className="upload-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-              <div>
-                <h3 style={{ marginBottom: '0.5rem' }}>Landlord Invoice</h3>
-                <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-                  {invoiceFile ? invoiceFile.name : 'Drag & drop or click to upload'}
-                </p>
-              </div>
-            </div>
-
+        <section className={styles.auditPanel}>
+          <div className={styles.sectionHeading}>
+            <div><p className={styles.kicker}>Start a new review</p><h2>Bring your documents</h2></div>
+            <span className={styles.secureNote}>PDF only · securely processed</span>
+          </div>
+          <div className={styles.uploadGrid}>
+            <div onDragOver={e => e.preventDefault()} onDrop={e => { e.preventDefault(); const file = e.dataTransfer.files[0]; if (file) setLeaseFile(file); }}><FileCard kind="lease" file={leaseFile} inputRef={leaseInputRef} onFile={setLeaseFile} /></div>
+            <div onDragOver={e => e.preventDefault()} onDrop={e => { e.preventDefault(); const file = e.dataTransfer.files[0]; if (file) setInvoiceFile(file); }}><FileCard kind="invoice" file={invoiceFile} inputRef={invoiceInputRef} onFile={setInvoiceFile} /></div>
           </div>
 
           {error && (
-            <div style={{ padding: '1rem', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid var(--danger)', borderRadius: '8px', color: '#fca5a5', marginBottom: '1.5rem', textAlign: 'center' }}>
+            <div className={styles.errorBox}>
               {error}
             </div>
           )}
 
-          <div style={{ display: 'flex', justifyContent: 'center' }}>
-            <button 
-              onClick={handleAudit} 
-              disabled={!leaseFile || !invoiceFile || isProcessing}
-              style={{ padding: '1rem 3rem', fontSize: '1.1rem' }}
-            >
+          <div className={styles.actionRow}>
+            <p>{leaseFile && invoiceFile ? 'Both documents are ready for analysis.' : 'Add both documents to continue.'}</p>
+            <button className={styles.primaryButton} onClick={handleAudit} disabled={!leaseFile || !invoiceFile || isProcessing}>
               {isProcessing ? (
                 <>
                   <div className="spinner"></div>
-                  Analyzing Documents...
+                  Processing securely...
                 </>
               ) : (
-                'Run AI Audit'
+                <>Run AI Audit <span>↗</span></>
               )}
             </button>
           </div>
-        </div>
+          {isProcessing && <div className={styles.progressLine}>Uploading documents <span>•</span> Running lease comparison <span>•</span> Validating findings</div>}
+        </section>
+        </>
       ) : (
-        <AuditResults data={results} onReset={() => setResults(null)} />
+        <AuditResults data={results} onReset={() => { setResults(null); setError(null); }} />
       )}
     </main>
   );

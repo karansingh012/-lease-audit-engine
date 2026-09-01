@@ -38,8 +38,7 @@ export async function POST(request: Request) {
     let finalData: unknown = null;
 
     await RocketRideClient.withConnection({ auth: apiKey, uri }, async (client) => {
-      const existingToken = await client.getTaskToken({ projectId: pipeline.project_id, source: 'webhook_1' });
-      const token = existingToken || (await client.use({ pipeline, useExisting: true })).token;
+      const token = (await client.use({ pipeline, useExisting: true })).token;
       const leaseResult = await client.send(token, new Uint8Array(await leaseFile.arrayBuffer()), { filepath: leaseFile.name }, 'application/pdf');
       const invoiceResult = await client.send(token, new Uint8Array(await invoiceFile.arrayBuffer()), { filepath: invoiceFile.name }, 'application/pdf');
       finalData = invoiceResult || leaseResult;

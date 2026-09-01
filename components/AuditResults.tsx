@@ -54,6 +54,13 @@ export default function AuditResults({ data, onReset }: AuditResultsProps) {
   // Clean the text - fix currency symbol
   const textContent = parsedText.replace(/[■�]/g, '₹');
 
+  const amountAfter = (pattern: RegExp) => textContent.match(pattern)?.[1] || '—';
+  const directOvercharge = amountAfter(/Direct Overcharge Amount[^₹]*₹\s*([\d,]+)/i);
+  const unsupportedCharges = amountAfter(/Unsupported[^₹]*₹\s*([\d,]+)/i);
+  const totalDisputed = amountAfter(/Total Disputed Amount[^₹]*₹\s*([\d,]+)/i);
+  const findingCount = (textContent.match(/(?:^|\n)\s*\d+\.\s+\*\*/g) || []).length;
+  const hasHighConfidence = /confidence[^\n]*(high|strong)/i.test(textContent);
+
   // Parse sections
   const sectionsRaw = textContent.split(/(?=^#{2,3}\s)/m);
 
@@ -139,6 +146,17 @@ export default function AuditResults({ data, onReset }: AuditResultsProps) {
         </button>
       </div>
 
+      <div className="result-intro">
+        <div><p className="result-kicker">Review workspace</p><h3>Findings at a glance</h3></div>
+        <span className="result-status">{hasHighConfidence ? '● High-confidence findings' : '● Human review recommended'}</span>
+      </div>
+      <div className="summary-grid">
+        <div className="summary-card summary-card-emphasis"><span>Total disputed</span><strong>₹{totalDisputed}</strong><small>Direct + unsupported charges</small></div>
+        <div className="summary-card"><span>Direct overcharges</span><strong>₹{directOvercharge}</strong><small>Clear contractual variance</small></div>
+        <div className="summary-card"><span>Unsupported charges</span><strong>₹{unsupportedCharges}</strong><small>Documentation needed</small></div>
+        <div className="summary-card"><span>Findings</span><strong>{findingCount || '—'}</strong><small>Items flagged for review</small></div>
+      </div>
+
       {totalOvercharge && (
         <div className="glass-panel" style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid #ef4444', textAlign: 'center', padding: '2rem' }}>
           <h3 style={{ color: '#ef4444', marginBottom: '0.5rem', fontSize: '1.2rem', textTransform: 'uppercase', letterSpacing: '1px' }}>
@@ -175,7 +193,7 @@ export default function AuditResults({ data, onReset }: AuditResultsProps) {
               📄 Draft Dispute Letter
             </h3>
             <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginTop: '0.25rem' }}>
-              Review the generated letter below before sending to the landlord.
+              Draft generated from verified findings. Human approval is required before sending.
             </p>
           </div>
           
@@ -201,7 +219,12 @@ export default function AuditResults({ data, onReset }: AuditResultsProps) {
               {disputeLetter}
             </ReactMarkdown>
           </div>
+          <div className="letter-tools">
+            <button onClick={() => navigator.clipboard?.writeText(disputeLetter)} className="tool-button">Copy letter</button>
+            <button onClick={() => { const blob = new Blob([disputeLetter], { type: 'text/plain' }); const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.download = 'lease-audit-dispute-letter.txt'; link.click(); URL.revokeObjectURL(url); }} className="tool-button">Download .txt</button>
+          </div>
           
+          <div className="review-banner"><span>Human Review Required</span><small>Confirm the evidence and amounts before taking action.</small></div>
           <div style={{ display: 'flex', gap: '1rem', marginTop: '2rem' }}>
             <button 
               onClick={() => completeAction('approve')}
