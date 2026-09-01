@@ -5,13 +5,13 @@
   "framework": "nextjs",
   "env": {
     "ROCKETRIDE_APIKEY": {
-      "description": "RocketRide API Key for authentication"
+      "description": "RocketRide API Key for authentication (production and staging use same key)"
     },
     "ROCKETRIDE_URI": {
-      "description": "RocketRide API URI (production or staging)"
+      "description": "RocketRide API URI (https://api.rocketride.ai for both production and staging)"
     },
     "ROCKETRIDE_GEMINI_APIKEY": {
-      "description": "RocketRide Gemini API Key"
+      "description": "RocketRide Gemini API Key (production and staging use same key)"
     }
   },
   "git": {
@@ -19,5 +19,15 @@
       "main": true,
       "staging": true
     }
+  },
+  "env-staging": {
+    "ROCKETRIDE_APIKEY": "rr_YOUR_STAGING_API_KEY",
+    "ROCKETRIDE_URI": "https://api.rocketride.ai",
+    "ROCKETRIDE_GEMINI_APIKEY": "YOUR_STAGING_GEMINI_API_KEY"
+  },
+  "env-preview": {
+    "ROCKETRIDE_APIKEY": "rr_YOUR_PREVIEW_API_KEY",
+    "ROCKETRIDE_URI": "https://api.rocketride.ai",
+    "ROCKETRIDE_GEMINI_APIKEY": "YOUR_PREVIEW_GEMINI_API_KEY"
   }
 }
