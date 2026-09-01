@@ -1,0 +1,23 @@
+{
+  "buildCommand": "npm run build",
+  "devCommand": "npm run dev",
+  "installCommand": "npm install",
+  "framework": "nextjs",
+  "env": {
+    "ROCKETRIDE_APIKEY": {
+      "description": "RocketRide API Key for authentication"
+    },
+    "ROCKETRIDE_URI": {
+      "description": "RocketRide API URI (production or staging)"
+    },
+    "ROCKETRIDE_GEMINI_APIKEY": {
+      "description": "RocketRide Gemini API Key"
+    }
+  },
+  "git": {
+    "deploymentEnabled": {
+      "main": true,
+      "staging": true
+    }
+  }
+}
