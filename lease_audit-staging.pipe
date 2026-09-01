@@ -1,0 +1,267 @@
+{
+  "components": [
+    {
+      "id": "webhook_1",
+      "provider": "webhook",
+      "name": "Webhook",
+      "config": {
+        "hideForm": true,
+        "mode": "Source",
+        "parameters": {},
+        "type": "webhook"
+      },
+      "ui": {
+        "position": {
+          "x": 10,
+          "y": 10
+        },
+        "nodeType": "default",
+        "formDataValid": true
+      }
+    },
+    {
+      "id": "parse_1",
+      "provider": "parse",
+      "name": "Lease Document Parser",
+      "config": {},
+      "ui": {
+        "position": {
+          "x": 250,
+          "y": 30
+        },
+        "nodeType": "default",
+        "formDataValid": true
+      },
+      "input": [
+        {
+          "lane": "tags",
+          "from": "webhook_1"
+        }
+      ]
+    },
+    {
+      "id": "prompt_1",
+      "provider": "prompt",
+      "name": "Unified Lease Audit Prompt",
+      "config": {
+        "instructions": [
+          "You are a Lease Audit Analyst.  Analyze the lease agreement and invoice information provided in the input.  Perform these tasks:  1. Extract the important financial and billing rules from the lease, including rent, fees, taxes, reimbursements, escalation rules, caps, percentages, dates, and other applicable charges.  2. Extract all relevant charges from the invoice or invoices, including charge name, billing period, quantity, rate, and billed amount.  3. Determine what amount should have been charged according to the lease terms.  4. Compare the allowed amount with the actual billed amount.  5. Identify potential overcharges or charges that appear inconsistent with the lease.  6. For every suspected overcharge, provide the exact supporting lease clause or relevant evidence from the parsed document.  7. Calculate the suspected overcharge amount whenever the information is sufficient.  8. Assign a confidence level to each finding and clearly state when the available information is insufficient.  9. Provide a concise audit summary.  10. Draft a professional dispute letter based only on verified findings. Do not invent lease terms, amounts, dates, or evidence.  Return the result in a clear structured format containing: - Audit Summary - Lease Rules - Invoice Charges - Allowed vs Billed Comparison - Potential Overcharges - Evidence - Confidence - Total Potential Overcharge - Draft Dispute Letter  The final result must be suitable for human review and approval before any action is taken."
+        ],
+        "systemPrompt": "You are a Lease Audit Engine. Your task is to audit the provided lease and invoice documents to detect overcharges and draft dispute letters.",
+        "prompt": "Analyze the following documents to perform these tasks:\n1. Extract relevant lease clauses and rules.\n2. Extract all charges from the invoice.\n3. Compare allowed charges from the lease versus billed amounts on the invoice.\n4. Detect any potential overcharges.\n5. Identify and quote evidence from the lease for any overcharge.\n6. Provide a confidence score and validation check for your findings.\n7. Draft a dispute letter based on any identified overcharges, formatted for human approval.\n\nDocuments:\n{{text}}",
+        "parameters": {
+          "google": {}
+        }
+      },
+      "ui": {
+        "position": {
+          "x": 472,
+          "y": 24
+        },
+        "nodeType": "default",
+        "formDataValid": true
+      },
+      "input": [
+        {
+          "lane": "text",
+          "from": "parse_1"
+        }
+      ]
+    },
+    {
+      "id": "llm_1",
+      "provider": "llm_gemini",
+      "name": "Unified Lease Audit LLM",
+      "config": {
+        "profile": "gemini-3_1-flash-lite-preview",
+        "model": "gemini-1.5-pro",
+        "1-pro-preview": {
+          "apikey": "${ROCKETRIDE_GEMINI_APIKEY}"
+        },
+        "parameters": {
+          "google": {}
+        },
+        "gemini-2_0-flash-lite": {
+          "apikey": "${ROCKETRIDE_GEMINI_APIKEY}"
+        },
+        "1-flash-lite-preview": {
+          "apikey": "${ROCKETRIDE_GEMINI_APIKEY}"
+        },
+        "5-flash": {
+          "apikey": "${ROCKETRIDE_GEMINI_APIKEY}"
+        }
+      },
+      "ui": {
+        "position": {
+          "x": 700,
+          "y": 50
+        },
+        "nodeType": "default",
+        "formDataValid": true
+      },
+      "input": [
+        {
+          "lane": "questions",
+          "from": "prompt_1"
+        }
+      ]
+    },
+    {
+      "id": "guardrails_1",
+      "provider": "guardrails",
+      "name": "Validation / Confidence Check",
+      "config": {},
+      "ui": {
+        "position": {
+          "x": 932,
+          "y": 23.5
+        },
+        "nodeType": "default",
+        "formDataValid": false
+      },
+      "input": [
+        {
+          "lane": "answers",
+          "from": "llm_1"
+        }
+      ]
+    },
+    {
+      "id": "response_answers_1",
+      "provider": "response_answers",
+      "name": "Human Approval / Final Result",
+      "config": {},
+      "ui": {
+        "position": {
+          "x": 1162,
+          "y": 50.5
+        },
+        "nodeType": "default",
+        "formDataValid": false
+      },
+      "input": [
+        {
+          "lane": "answers",
+          "from": "guardrails_1"
+        }
+      ]
+    },
+    {
+      "id": "annotation_1",
+      "provider": "annotation",
+      "name": "Note",
+      "config": {
+        "content": "",
+        "bgColor": "var(--rr-annotation-bg-default)",
+        "fgColor": "var(--rr-text-primary)"
+      },
+      "ui": {
+        "position": {
+          "x": 440,
+          "y": 190
+        },
+        "nodeType": "annotation",
+        "formDataValid": true
+      }
+    },
+    {
+      "id": "annotation_2",
+      "provider": "annotation",
+      "name": "Note",
+      "config": {
+        "content": "",
+        "bgColor": "var(--rr-annotation-bg-default)",
+        "fgColor": "var(--rr-text-primary)"
+      },
+      "ui": {
+        "position": {
+          "x": 660,
+          "y": 190
+        },
+        "nodeType": "annotation",
+        "formDataValid": true
+      }
+    },
+    {
+      "id": "annotation_3",
+      "provider": "annotation",
+      "name": "Note",
+      "config": {
+        "content": "",
+        "bgColor": "var(--rr-annotation-bg-default)",
+        "fgColor": "var(--rr-text-primary)"
+      },
+      "ui": {
+        "position": {
+          "x": 660,
+          "y": -50
+        },
+        "nodeType": "annotation",
+        "formDataValid": true
+      }
+    },
+    {
+      "id": "annotation_4",
+      "provider": "annotation",
+      "name": "Note",
+      "config": {
+        "content": "",
+        "bgColor": "var(--rr-annotation-bg-default)",
+        "fgColor": "var(--rr-text-primary)"
+      },
+      "ui": {
+        "position": {
+          "x": 440,
+          "y": -150
+        },
+        "nodeType": "annotation",
+        "formDataValid": true
+      }
+    },
+    {
+      "id": "annotation_5",
+      "provider": "annotation",
+      "name": "Note",
+      "config": {
+        "content": "",
+        "bgColor": "var(--rr-annotation-bg-default)",
+        "fgColor": "var(--rr-text-primary)"
+      },
+      "ui": {
+        "position": {
+          "x": 940,
+          "y": 180
+        },
+        "nodeType": "annotation",
+        "formDataValid": true
+      }
+    },
+    {
+      "id": "annotation_6",
+      "provider": "annotation",
+      "name": "Note",
+      "config": {
+        "content": "",
+        "bgColor": "var(--rr-annotation-bg-default)",
+        "fgColor": "var(--rr-text-primary)"
+      },
+      "ui": {
+        "position": {
+          "x": 940,
+          "y": -120
+        },
+        "nodeType": "annotation",
+        "formDataValid": true
+      }
+    }
+  ],
+  "project_id": "02503fa6-ae05-4b1e-bb06-83e0b4ea91ad",
+  "version": 1,
+  "docRevision": 30,
+  "isLocked": false,
+  "snapToGrid": true,
+  "snapGridSize": [
+    10,
+    10
+  ]
+}
